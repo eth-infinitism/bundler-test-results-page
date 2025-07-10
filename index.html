@@ -225,6 +225,110 @@
         .dark .hover\:bg-gray-600:hover {
             background-color: #4b5563;
         }
+
+        /* Sticky header styles */
+        #stickyHeader {
+            transition: opacity 0.2s ease-in-out;
+        }
+        
+        #stickyHeader.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        /* Ensure the sticky header table has the same styling as the original */
+        #stickyHeader table {
+            min-width: 800px;
+        }
+        
+        @media (max-width: 768px) {
+            #stickyHeader table {
+                min-width: 600px;
+            }
+        }
+        
+        /* Add some top padding to the main content when sticky header is visible */
+        body.sticky-header-active {
+            padding-top: 60px; /* Adjust based on your header height */
+        }
+
+        /* Enhanced table container styles for horizontal scrolling */
+        .table-container {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            position: relative;
+        }
+        
+        .table-container table {
+            min-width: 800px;
+            width: 100%;
+        }
+        
+        @media (max-width: 768px) {
+            .table-container table {
+                min-width: 600px;
+            }
+        }
+        
+        /* Sticky header styles */
+        #stickyHeader {
+            transition: opacity 0.2s ease-in-out;
+        }
+        
+        #stickyHeader.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        /* Ensure the sticky header table has the same styling as the original */
+        #stickyHeader .table-container {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        #stickyHeader table {
+            min-width: 800px;
+            width: 100%;
+        }
+        
+        @media (max-width: 768px) {
+            #stickyHeader table {
+                min-width: 600px;
+            }
+        }
+        
+        /* Hide scrollbars on the sticky header for cleaner look */
+        #stickyHeader .table-container::-webkit-scrollbar {
+            display: none;
+        }
+        
+        #stickyHeader .table-container {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        
+        /* Ensure both containers have the same scroll behavior */
+        .table-container {
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e0 transparent;
+        }
+        
+        .table-container::-webkit-scrollbar {
+            height: 8px;
+        }
+        
+        .table-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        .table-container::-webkit-scrollbar-thumb {
+            background-color: #cbd5e0;
+            border-radius: 4px;
+        }
+        
+        .dark .table-container::-webkit-scrollbar-thumb {
+            background-color: #4b5563;
+        }
     </style>
 </head>
 <body class="bg-gray-50 dark:bg-gray-900 min-h-screen">
@@ -345,7 +449,7 @@
             </div>
         </div>
 
-        <!-- Per-Test Results Table -->
+        <!-- Update the per-test table section -->
         <div id="perTestResults">
             <h2 class="text-xl font-bold border-l-4 border-black dark:border-gray-400 pl-4 mb-2 text-gray-900 dark:text-white">
                 Per-test result of latest run
@@ -353,7 +457,7 @@
             <p class="text-sm text-gray-600 dark:text-gray-400 mb-6 pl-4">
                 ( ✅ success ; ❌ error ; ➖ skipped )
             </p>
-            <div class="table-container">
+            <div class="table-container" id="perTestTableContainer">
                 <table id="perTestTable" class="w-full border-collapse bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-lg">
                     <thead id="perTestTableHead">
                         <!-- Headers will be populated by JavaScript -->
@@ -362,6 +466,19 @@
                         <!-- Rows will be populated by JavaScript -->
                     </tbody>
                 </table>
+            </div>
+        </div>
+
+        <!-- Update the sticky header -->
+        <div id="stickyHeader" class="fixed top-0 left-0 right-0 z-50 hidden bg-white dark:bg-gray-800 shadow-lg border-b border-gray-200 dark:border-gray-700">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="table-container" id="stickyTableContainer">
+                    <table class="w-full border-collapse bg-white dark:bg-gray-800">
+                        <thead id="stickyTableHead">
+                            <!-- Will be populated by JavaScript -->
+                        </thead>
+                    </table>
+                </div>
             </div>
         </div>
     </main>

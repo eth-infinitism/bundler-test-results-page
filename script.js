@@ -26,6 +26,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize theme first
     initializeTheme();
     initializeVersionSelector();
+    initializeStickyHeader(); // Add this line
     loadTestResults();
 });
 
@@ -413,6 +414,151 @@ function renderOverallTable(bundlersNames, latestResults) {
     });
 }
 
+// Sticky header management
+let stickyHeader = null;
+let perTestTable = null;
+let perTestTableHead = null;
+let stickyTableHead = null;
+let perTestTableContainer = null;
+let stickyTableContainer = null;
+let isStickyHeaderVisible = false;
+let isScrolling = false; // Prevent infinite scroll loops
+
+function initializeStickyHeader() {
+    stickyHeader = document.getElementById('stickyHeader');
+    perTestTable = document.getElementById('perTestTable');
+    perTestTableHead = document.getElementById('perTestTableHead');
+    stickyTableHead = document.getElementById('stickyTableHead');
+    perTestTableContainer = document.getElementById('perTestTableContainer');
+    stickyTableContainer = document.getElementById('stickyTableContainer');
+    
+    if (!stickyHeader || !perTestTable || !perTestTableHead || !stickyTableHead || !perTestTableContainer || !stickyTableContainer) {
+        console.warn('Sticky header elements not found');
+        return;
+    }
+    
+    // Add scroll event listeners
+    window.addEventListener('scroll', handleVerticalScroll);
+    perTestTableContainer.addEventListener('scroll', handleHorizontalScroll);
+    stickyTableContainer.addEventListener('scroll', handleStickyHorizontalScroll);
+    
+    // Add resize event listener to update column widths
+    window.addEventListener('resize', updateStickyHeaderWidths);
+}
+
+function handleVerticalScroll() {
+    if (!perTestTable || !stickyHeader) return;
+    
+    const tableRect = perTestTable.getBoundingClientRect();
+    const tableTop = tableRect.top;
+    const tableBottom = tableRect.bottom;
+    const headerHeight = perTestTableHead.offsetHeight;
+    
+    // Show sticky header when original header is out of view
+    if (tableTop < 0 && tableBottom > headerHeight) {
+        if (!isStickyHeaderVisible) {
+            showStickyHeader();
+        }
+    } else {
+        if (isStickyHeaderVisible) {
+            hideStickyHeader();
+        }
+    }
+}
+
+function handleHorizontalScroll() {
+    if (!stickyTableContainer || isScrolling) return;
+    
+    isScrolling = true;
+    stickyTableContainer.scrollLeft = perTestTableContainer.scrollLeft;
+    
+    // Reset the flag after a short delay
+    setTimeout(() => {
+        isScrolling = false;
+    }, 10);
+}
+
+function handleStickyHorizontalScroll() {
+    if (!perTestTableContainer || isScrolling) return;
+    
+    isScrolling = true;
+    perTestTableContainer.scrollLeft = stickyTableContainer.scrollLeft;
+    
+    // Reset the flag after a short delay
+    setTimeout(() => {
+        isScrolling = false;
+    }, 10);
+}
+
+function showStickyHeader() {
+    if (!stickyHeader) return;
+    
+    stickyHeader.classList.remove('hidden');
+    isStickyHeaderVisible = true;
+    
+    // Update column widths to match the original table
+    updateStickyHeaderWidths();
+    
+    // Sync the horizontal scroll position
+    if (perTestTableContainer && stickyTableContainer) {
+        stickyTableContainer.scrollLeft = perTestTableContainer.scrollLeft;
+    }
+}
+
+function hideStickyHeader() {
+    if (!stickyHeader) return;
+    
+    stickyHeader.classList.add('hidden');
+    isStickyHeaderVisible = false;
+}
+
+function updateStickyHeaderWidths() {
+    if (!perTestTableHead || !stickyTableHead) return;
+    
+    // Copy the header structure from the original table
+    stickyTableHead.innerHTML = perTestTableHead.innerHTML;
+    
+    // Get all header cells from both tables
+    const originalHeaders = perTestTableHead.querySelectorAll('th');
+    const stickyHeaders = stickyTableHead.querySelectorAll('th');
+    
+    // Match the widths of each column
+    for (let i = 0; i < originalHeaders.length; i++) {
+        if (stickyHeaders[i]) {
+            const originalWidth = originalHeaders[i].offsetWidth;
+            stickyHeaders[i].style.width = `${originalWidth}px`;
+            stickyHeaders[i].style.minWidth = `${originalWidth}px`;
+        }
+    }
+    
+    // Ensure both containers have the same scroll width
+    if (perTestTableContainer && stickyTableContainer) {
+        stickyTableContainer.style.width = `${perTestTableContainer.offsetWidth}px`;
+    }
+}
+
+// Add this to the existing functions for better performance
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// Use debounced scroll handlers for better performance
+const debouncedHandleHorizontalScroll = debounce(handleHorizontalScroll, 5);
+const debouncedHandleStickyHorizontalScroll = debounce(handleStickyHorizontalScroll, 5);
+
+// Update the event listeners
+perTestTableContainer.addEventListener('scroll', debouncedHandleHorizontalScroll);
+stickyTableContainer.addEventListener('scroll', debouncedHandleStickyHorizontalScroll);
+
+// Modify the existing renderPerTestTable function to also update sticky header
 function renderPerTestTable(bundlersNames, bundlersPerTestResults) {
     const tableHead = document.getElementById('perTestTableHead');
     const tableBody = document.getElementById('perTestTableBody');
@@ -468,6 +614,13 @@ function renderPerTestTable(bundlersNames, bundlersPerTestResults) {
         
         tableBody.appendChild(row);
     });
+    
+    // Update sticky header after a short delay to ensure table is rendered
+    setTimeout(() => {
+        if (isStickyHeaderVisible) {
+            updateStickyHeaderWidths();
+        }
+    }, 100);
 }
 
 function getTestResultDisplayEmoji(result) {
